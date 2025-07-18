@@ -1,0 +1,12 @@
+# Introduction
+This repo contains the source code of **PhotoGnark**, a Golang implementation of [PhotoProof](https://ieeexplore.ieee.org/document/7546506) that leverages the Gnark library for Zero Knowledge functionality.
+
+# Pixels, Indeces and Images
+An RGB pixel is an array of size 3, where each value represents red, green and blue. 
+
+A pixel array can be *packed* into a 24-bit integer like this: `packed = (R << 16) | (G << 8) | B`.
+
+An image is an N*N array of RGB pixel arrays or packed pixels. 
+
+# Transformation
+image transformations are functions that input an image and output a new image by changing pixel values.
