@@ -1,12 +1,38 @@
 # Introduction
 This repo contains the source code of **PhotoGnark**, a Golang implementation of [PhotoProof](https://ieeexplore.ieee.org/document/7546506) that leverages the Gnark library for Zero Knowledge functionality.
 
-# Pixels, Indeces and Images
-An RGB pixel is an array of size 3, where each value represents red, green and blue. 
+# Pixels
+An *RGB pixel* is an array of size 3, where each index contains a number from 0 to 255 (also known as 1 byte). Each byte represents red, green and blue (i.e. [R,G,B]).
 
-A pixel array can be *packed* into a 24-bit integer like this: `packed = (R << 16) | (G << 8) | B`.
+A pixel array can be *packed* into a 24-bit integer like this: `packed = (R << 16) | (G << 8) | B`; and packed pixels can also be unpacked into RGB pixels.
 
-An image is an N*N array of RGB pixel arrays or packed pixels. 
+# Images
+An image is an array of size N*N of *RGB pixels* or *packed pixels*.
 
-# Transformation
-image transformations are functions that input an image and output a new image by changing pixel values.
+Images can also be attached to Metadata, as a tuple. Metadata map strings and numbers to key terms, such as "author". 
+
+# Image Transformations
+Image transformations are functions that input an image, alongside some parameters, and outputs a new image by changing pixel values.
+
+# Permissible Transformations
+A set of transformations are are defined as permissible by an administrator. This allows for administrators to create their own definition for Image Authenticity. For example, an admin can set increasing all pixels by a value less than 5 as a permissible transformation, which would mean that the image would retain its authenticity even if it is altered by increasing all pixel values by 3, according to the admin.
+
+Permissible transformations can be made public by the admin or kept private.
+
+# PhotoProof's Image Authentication
+An image is original if its digital signature verified using a verification key and the signature scheme secure.
+
+An image is said to have a *permissible provenance* if it has undergone only permissible transformations. 
+
+An image *t_n* is authentic when it has a permissible provenance (*O,t1,t2,t3,...t_n*) that began as an original image O.
+
+PhotoProof is an image authentication scheme that combines digital signature scheme and the typical Zero-Knowledge algorithms commonly known as the Generator, Prover and Verifier schemes.
+
+### The Generator
+
+
+### The Prover
+
+### The Verifier
+
+### The Signature Scheme 
