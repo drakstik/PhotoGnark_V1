@@ -1,46 +1,63 @@
 package image
 
-type PixelRGB struct {
-	R   uint8
-	G   uint8
-	B   uint8
-	row uint64
-	col uint64
-	idx uint64
+import "github.com/consensys/gnark/frontend"
+
+type PixelLocation struct {
+	Row uint64
+	Col uint64
+	Idx uint64
 }
 
-type PixelPacked struct {
-	RGB uint32
-	row uint64
-	col uint64
-	idx uint64
+type Pixel struct {
+	RGB    [3]uint8
+	Packed uint32
+	Loc    PixelLocation
 }
 
-// TODO
-type FrPixelRGB struct {
+// ---------------------------------------------------------------
+
+type FrPixelLoc struct {
+	Row frontend.Variable //secret
+	Col frontend.Variable //secret
+	Idx frontend.Variable //secret
 }
 
-// TODO
-type FrPixelPacked struct {
+type FrPixel struct {
+	RGB    frontend.Variable //secret
+	Packed frontend.Variable //secret
+	Loc    FrPixelLoc        //secret
 }
 
-func (pixel PixelRGB) Pack() PixelPacked {
-	rgb := uint32(pixel.R)<<16 | uint32(pixel.G)<<8 | uint32(pixel.B)
-	return PixelPacked{
-		RGB: rgb,
-		row: pixel.row,
-		col: pixel.col,
-		idx: pixel.idx,
+// ---------------------------------------------------------------------------------------
+
+func (pxl Pixel) ToFr() (frPxl FrPixel) {
+	loc := FrPixelLoc{
+		Row: pxl.Loc.Row,
+		Col: pxl.Loc.Col,
+		Idx: pxl.Loc.Idx,
+	}
+
+	return FrPixel{
+		RGB:    pxl.RGB,
+		Packed: pxl.Packed,
+		Loc:    loc,
 	}
 }
 
-func (packed PixelPacked) Unpack() PixelRGB {
-	return PixelRGB{
-		R:   uint8((packed.RGB >> 16) & 0xFF),
-		G:   uint8((packed.RGB >> 8) & 0xFF),
-		B:   uint8(packed.RGB & 0xFF),
-		row: packed.row,
-		col: packed.col,
-		idx: packed.idx,
-	}
+//--------------------------------------------------------------------------------------------------------------
+
+func NewPixel(rgb [3]uint8, loc PixelLocation) Pixel {
+	return Pixel{RGB: rgb, Packed: Pack(rgb), Loc: loc}
+}
+
+func NewPixel_p(packed uint32, loc PixelLocation) Pixel {
+	return Pixel{RGB: Unpack(packed), Packed: packed, Loc: loc}
+}
+
+func Pack(rgb [3]uint8) uint32 {
+	return uint32(rgb[0])<<16 | uint32(rgb[1])<<8 | uint32(rgb[2])
+}
+
+func Unpack(packed uint32) [3]uint8 {
+	return [3]uint8{uint8((packed >> 16) & 0xFF), uint8((packed >> 8) & 0xFF), uint8(packed & 0xFF)}
 }

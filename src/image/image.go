@@ -2,225 +2,177 @@ package image
 
 import (
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"math/big"
 
-	"github.com/consensys/gnark/frontend"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+	"github.com/consensys/gnark-crypto/hash"
+	"github.com/consensys/gnark-crypto/signature"
 )
 
 const (
 	// N must be a constant, not a variable, because N is used in the definition of the image transformation circuits;
 	// and circuits do not change once compiled. N is also used to set array size, which is set at compile time and is meant
 	// to remain unchangeable.
-	N  = 1
+	N  = 5
 	N2 = N * N // Number of pixels in an image.
 )
 
-type ImagePacked struct {
-	Pixels [N * N]PixelPacked
-}
-
-type ImageRGB struct {
-	Pixels [N * N]PixelRGB
+type Image struct {
+	Pixels   [N2]Pixel
+	ImgBytes []byte
 }
 
 type FrImage struct {
-	Pixels [N * N]frontend.Variable // Secret
+	Pixels   [N2]FrPixel // Secret
+	ImgBytes []byte
 }
 
 // ---------------------------------------------------------------------------------------
 
-func NewImageRGB(flag string) (ImageRGB, error) {
-	newImage := ImageRGB{Pixels: [N * N]PixelRGB{}}
-
-	if flag == "" {
-		return newImage, nil
-	}
+func NewImage(flag string) (Image, error) {
+	newImage := Image{Pixels: [N2]Pixel{}}
 
 	for row := 0; row < N; row++ {
 		for col := 0; col < N; col++ {
 			if flag == "black" {
 				// Translate the 2D location (x,y) into a 1D index.
 				idx := row*N + col
+				black := [3]uint8{0, 0, 0}
 
-				blackPixel := PixelRGB{
-					R:   0,
-					G:   0,
-					B:   0,
-					row: uint64(row),
-					col: uint64(col),
-					idx: uint64(idx),
+				blackPixel := Pixel{
+					RGB:    black,
+					Packed: Pack(black),
+					Loc:    PixelLocation{Row: uint64(row), Col: uint64(col), Idx: uint64(idx)},
 				}
 
-				newImage.Pixels[idx] = blackPixel
+				newImage.Pixels[blackPixel.Loc.Idx] = blackPixel
 			}
 
 			if flag == "white" {
 				// Translate the 2D location (x,y) into a 1D index.
 				idx := row*N + col
+				white := [3]uint8{255, 255, 255}
 
-				whitePixel := PixelRGB{
-					R:   255,
-					G:   255,
-					B:   255,
-					row: uint64(row),
-					col: uint64(col),
-					idx: uint64(idx),
+				whitePixel := Pixel{
+					RGB:    white,
+					Packed: Pack(white),
+					Loc:    PixelLocation{Row: uint64(row), Col: uint64(col), Idx: uint64(idx)},
 				}
 
-				newImage.Pixels[idx] = whitePixel
+				newImage.Pixels[whitePixel.Loc.Idx] = whitePixel
 			}
 
 			if flag == "random" {
 				// Generate a random number between 0 and 255
-				n, err := rand.Int(rand.Reader, big.NewInt(256))
+				n1, err := rand.Int(rand.Reader, big.NewInt(256))
 				if err != nil {
-					return ImageRGB{}, err
+					return Image{}, err
+				}
+				n2, err := rand.Int(rand.Reader, big.NewInt(256))
+				if err != nil {
+					return Image{}, err
+				}
+				n3, err := rand.Int(rand.Reader, big.NewInt(256))
+				if err != nil {
+					return Image{}, err
 				}
 
-				randomR := uint8(n.Int64())
-				randomG := uint8(n.Int64())
-				randomB := uint8(n.Int64())
+				random := [3]uint8{uint8(n1.Int64()), uint8(n2.Int64()), uint8(n3.Int64())}
 
 				// Translate the 2D location (x,y) into a 1D index.
 				idx := row*N + col
 
-				randomPixel := PixelRGB{
-					R:   randomR,
-					G:   randomG,
-					B:   randomB,
-					row: uint64(row),
-					col: uint64(col),
-					idx: uint64(idx),
+				randomPixel := Pixel{
+					RGB:    random,
+					Packed: Pack(random),
+					Loc:    PixelLocation{Row: uint64(row), Col: uint64(col), Idx: uint64(idx)},
 				}
 
-				newImage.Pixels[idx] = randomPixel
+				newImage.Pixels[randomPixel.Loc.Idx] = randomPixel
 			}
 		}
 	}
 
-	return newImage, nil
-}
-
-func NewImagePacked(flag string) (ImagePacked, error) {
-	newImage := ImagePacked{Pixels: [N * N]PixelPacked{}}
-
-	if flag == "" {
-		return newImage, nil
+	b, err := newImage.ToBigEndian()
+	if err != nil {
+		return Image{}, err
 	}
 
-	for row := 0; row < N; row++ {
-		for col := 0; col < N; col++ {
-			if flag == "black" {
-				// Translate the 2D location (x,y) into a 1D index.
-				idx := row*N + col
+	newImage.ImgBytes = b
 
-				blackPixel := PixelPacked{
-					RGB: uint32(0)<<16 | uint32(0)<<8 | uint32(0),
-					row: uint64(row),
-					col: uint64(col),
-					idx: uint64(idx),
-				}
-
-				newImage.Pixels[idx] = blackPixel
-			}
-
-			if flag == "white" {
-				// Translate the 2D location (x,y) into a 1D index.
-				idx := row*N + col
-
-				whitePixel := PixelPacked{
-					RGB: uint32(255)<<16 | uint32(255)<<8 | uint32(255),
-					row: uint64(row),
-					col: uint64(col),
-					idx: uint64(idx),
-				}
-
-				newImage.Pixels[idx] = whitePixel
-			}
-
-			if flag == "random" {
-				// Generate a random number between 0 and 255
-				n, err := rand.Int(rand.Reader, big.NewInt(256))
-				if err != nil {
-					return ImagePacked{}, err
-				}
-
-				randomR := uint8(n.Int64())
-				randomG := uint8(n.Int64())
-				randomB := uint8(n.Int64())
-
-				// Translate the 2D location (x,y) into a 1D index.
-				idx := row*N + col
-
-				randomPixel := PixelPacked{
-					RGB: uint32(randomR)<<16 | uint32(randomG)<<8 | uint32(randomB),
-					row: uint64(row),
-					col: uint64(col),
-					idx: uint64(idx),
-				}
-
-				newImage.Pixels[idx] = randomPixel
-			}
-		}
-	}
-
-	return newImage, nil
+	return newImage, err
 }
-
-// TODO
-func (img ImageRGB) ToImagePacked() (ImagePacked, error)
-
-// TODO
-func (img ImagePacked) ToImageRGB() (ImageRGB, error)
 
 // ----------------------------------------------------------------------------------------
 
-func (img ImageRGB) PrintImage() {
+func (img Image) PrintImage() {
 	fmt.Println("RGB Image: ")
 	for row := 0; row < N; row++ {
 		for col := 0; col < N; col++ {
 			currentIdx := row*N + col
 			pxl := img.Pixels[currentIdx]
-			fmt.Printf("(%3d, %3d, %3d) ", pxl.R, pxl.G, pxl.B)
+			fmt.Printf("(%3d, %3d, %3d) ", pxl.RGB[0], pxl.RGB[1], pxl.RGB[2])
 		}
 		fmt.Println() // New line after each row
 	}
 }
 
-func (img ImagePacked) PrintImage() {
-	fmt.Println("Packed Image: ")
-	for row := 0; row < N; row++ {
-		for col := 0; col < N; col++ {
-			currentIdx := row*N + col
-			pxl := img.Pixels[currentIdx]
-			pxlPacked := pxl.Unpack()
-			fmt.Printf("(%3d, %3d, %3d) ", pxlPacked.R, pxlPacked.G, pxlPacked.B)
-		}
-		fmt.Println() // New line after each row
+func (img Image) ToFr() (frImg FrImage) {
+
+	output := FrImage{}
+
+	for i := 0; i < N*N; i++ {
+		pxl := img.Pixels[i]
+		output.Pixels[pxl.Loc.Idx] = pxl.ToFr()
 	}
+
+	return output
 }
 
-func (img ImagePacked) AddPixelRGB(pxl PixelRGB) {
-	img.Pixels[pxl.idx] = pxl.Pack()
+// Return the JSON encoded version of an image as bytes.
+func (img Image) ToByte() ([]byte, error) {
+	encoded_image, err := json.Marshal(img)
+	if err != nil {
+		fmt.Println("Error while encoding image: " + err.Error())
+		return []byte{}, err
+	}
+
+	return encoded_image, err
 }
 
-func (img ImagePacked) AddPixelPacked(pxl PixelPacked) {
-	img.Pixels[pxl.idx] = pxl
+// Interprets image bytes as the bytes of a big-endian unsigned integer, sets z to that value, and return z value as a big endian slice.
+// If this step is skipped, you get this error:
+// "runtime error: slice bounds out of range".
+// This step is required to define an image into something that Gnark circuits understand.
+func (img Image) ToBigEndian() ([]byte, error) {
+
+	// Define the picture as a "z value of a field element (fr.element)" that's converted into a big endian
+	img_bytes, err := img.ToByte() // Encode image into bytes using JSON
+	if err != nil {
+		return []byte{}, err
+	}
+
+	var msgFr fr.Element // Define a field element
+
+	// (https://pkg.go.dev/github.com/consensys/gnark-crypto@v0.9.1/ecc/bn254/fr#Element.SetBytes)
+	msgFr.SetBytes(img_bytes)                 // Set the image bytes as the z value for the fr.Element
+	big_endian_bytes_Image := msgFr.Marshal() // Convert z value to a big endian slice
+
+	return big_endian_bytes_Image, err
 }
 
-func (img ImageRGB) AddPixelRGB(pxl PixelRGB) {
-	img.Pixels[pxl.idx] = pxl
-}
+func (img Image) Sign(secretKey signature.Signer) ([]byte, error) {
 
-func (img ImageRGB) AddPixelPacked(pxl PixelPacked) {
-	img.Pixels[pxl.idx] = pxl.Unpack()
-}
+	// 3. Instantiate MIMC BN254 hash function, to be used in signing the image
+	hFunc := hash.MIMC_BN254.New()
 
-func (img FrImage) AddPixelRGB(pxl PixelRGB) {
-	img.Pixels[pxl.idx] = frontend.Variable(pxl.Pack().RGB)
-}
+	// 4. Sign the image (must first turn the image into a Big Endian)
+	signature, err := secretKey.Sign(img.ImgBytes, hFunc)
+	if err != nil {
+		fmt.Println("Error while signing image: " + err.Error())
+	}
 
-func (img FrImage) AddPixelPacked(pxl PixelPacked) {
-	img.Pixels[pxl.idx] = frontend.Variable(pxl.RGB)
+	return signature, err
 }

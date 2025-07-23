@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/drakstik/PhotoGnark_V1/src/examples"
 
 func main() {
-	fmt.Println("Hello, world!")
+	examples.Test_Identity_Transformation()
 }
