@@ -44,7 +44,7 @@ func NewCamera(permissible []photoproof.Transformation) SecureCamera {
 	return camera
 }
 
-// TODO: test
+// TODO: rewrite so
 func (camera SecureCamera) take_random_photo() (Photograph, error) {
 	img, err := image.NewImage("random")
 	if err != nil {

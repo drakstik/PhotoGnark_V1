@@ -15,7 +15,7 @@ const (
 	// N must be a constant, not a variable, because N is used in the definition of the image transformation circuits;
 	// and circuits do not change once compiled. N is also used to set array size, which is set at compile time and is meant
 	// to remain unchangeable.
-	N  = 5
+	N  = 1080
 	N2 = N * N // Number of pixels in an image.
 )
 
