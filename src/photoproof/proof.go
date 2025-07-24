@@ -10,12 +10,17 @@ import (
 	"github.com/consensys/gnark/backend/witness"
 )
 
+type PCD_Keys struct {
+	ProvingKey   groth16.ProvingKey
+	VerifyingKey groth16.VerifyingKey
+}
+
 type Proof struct {
 	Signature     []byte
 	PublicKey     signature.PublicKey
-	PCD_Proof     groth16.Proof
-	PublicWitness witness.Witness
-	VeriKey       groth16.VerifyingKey
+	PCD_Keys      map[string]PCD_Keys
+	PCD_Proofs    map[string]groth16.Proof
+	PCD_Witnesses map[string]witness.Witness
 }
 
 func NewSecretKey() (signature.Signer, error) {

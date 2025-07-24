@@ -5,10 +5,10 @@ import (
 
 	"github.com/drakstik/PhotoGnark_V1/src/image"
 	"github.com/drakstik/PhotoGnark_V1/src/photoproof"
-	"github.com/drakstik/PhotoGnark_V1/src/transformations"
 )
 
 // This tests NewImage("random"), NewSecretKey(), NewIdentity(), Identity.Edit()
+// These can all be done by the SecureCamera!
 func Test_Identity_Transformation() {
 	img, err := image.NewImage("random")
 	if err != nil {
@@ -26,17 +26,17 @@ func Test_Identity_Transformation() {
 		return
 	}
 
-	id, err := transformations.NewIdentity(img, sk)
+	id, err := photoproof.NewIdentity(img, sk)
 	if err != nil {
 		return
 	}
 
-	should_be_true, err := id.Edit(img)
+	should_be_true, err := id.VerifySignature(img)
 	if err != nil {
 		return
 	}
 
-	should_be_false, err := id.Edit(img2)
+	should_be_false, err := id.VerifySignature(img2)
 	if err != nil {
 		return
 	}

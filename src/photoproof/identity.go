@@ -1,4 +1,4 @@
-package transformations
+package photoproof
 
 import (
 	"fmt"
@@ -35,7 +35,7 @@ func NewIdentity(img image.Image, sk signature.Signer) (IdentityTransformation, 
 }
 
 // TODO
-func (idT IdentityTransformation) ToFr(sk signature.Signer) (IdentityCircuit, error) {
+func (idT IdentityTransformation) ToFr(sk signature.Signer) (TransformationCircuit, error) {
 	digsig, err := idT.Img.Sign(sk)
 
 	// Assign the PK & SK to their eddsa equivilant
@@ -55,7 +55,7 @@ func (idT IdentityTransformation) ToFr(sk signature.Signer) (IdentityCircuit, er
 }
 
 // TODO
-func (idT IdentityTransformation) Edit(img image.Image) (bool, error) {
+func (idT IdentityTransformation) VerifySignature(img image.Image) (bool, error) {
 	// Instantiate MIMC BN254 hash function, to be used in signing the image
 	hFunc := hash.MIMC_BN254.New()
 
@@ -67,4 +67,12 @@ func (idT IdentityTransformation) Edit(img image.Image) (bool, error) {
 	}
 
 	return output, err
+}
+
+func (idT IdentityTransformation) GetType() string {
+	return "id"
+}
+
+func (idT IdentityTransformation) ToTr() Transformation {
+	return idT
 }
