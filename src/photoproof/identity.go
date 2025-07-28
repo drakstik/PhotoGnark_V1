@@ -35,7 +35,7 @@ func NewIdentity(img image.Image, sk signature.Signer) (IdentityTransformation, 
 }
 
 // TODO
-func (idT IdentityTransformation) ToFr(sk signature.Signer) (TransformationCircuit, error) {
+func (idT IdentityTransformation) ToFr(sk signature.Signer, public_key []byte) (TransformationCircuit, error) {
 	digsig, err := idT.Img.Sign(sk)
 
 	// Assign the PK & SK to their eddsa equivilant
@@ -43,12 +43,13 @@ func (idT IdentityTransformation) ToFr(sk signature.Signer) (TransformationCircu
 	var eddsa_PK eddsa.PublicKey
 
 	eddsa_digSig.Assign(1, digsig)
-	eddsa_PK.Assign(1, idT.PublicKey.Bytes())
+	eddsa_PK.Assign(1, public_key)
 
-	circuit := IdentityCircuit{
+	// Return a pointer here
+	circuit := &IdentityCircuit{
 		PublicKey:       eddsa_PK,
 		EdDSA_Signature: eddsa_digSig,
-		ImgBytes:        idT.Img.ImgBytes,
+		ImgBytes:        idT.Img.PixelBytes,
 	}
 
 	return circuit, err
@@ -59,7 +60,7 @@ func (idT IdentityTransformation) VerifySignature(img image.Image) (bool, error)
 	// Instantiate MIMC BN254 hash function, to be used in signing the image
 	hFunc := hash.MIMC_BN254.New()
 
-	output, err := idT.PublicKey.Verify(idT.Signature, img.ImgBytes, hFunc)
+	output, err := idT.PublicKey.Verify(idT.Signature, img.PixelBytes, hFunc)
 	if err != nil {
 		fmt.Println("funct (idT) Edit(): ERROR during normal signature verification.")
 		fmt.Print(err.Error())
@@ -71,8 +72,4 @@ func (idT IdentityTransformation) VerifySignature(img image.Image) (bool, error)
 
 func (idT IdentityTransformation) GetType() string {
 	return "id"
-}
-
-func (idT IdentityTransformation) ToTr() Transformation {
-	return idT
 }

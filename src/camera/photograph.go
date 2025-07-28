@@ -7,5 +7,5 @@ import (
 
 type Photograph struct {
 	Img   image.Image
-	Proof []photoproof.Proof
+	Proof photoproof.Gnark_Proof
 }

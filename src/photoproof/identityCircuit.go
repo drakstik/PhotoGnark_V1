@@ -15,26 +15,26 @@ import (
 )
 
 type IdentityCircuit struct {
-	PublicKey       eddsa.PublicKey   `gnark:",public"`
-	EdDSA_Signature eddsa.Signature   `gnark:",public"`
-	ImgBytes        frontend.Variable `gnark:",public"` // Image as a Big Endian bytes; used in signature verification
+	PublicKey       eddsa.PublicKey
+	EdDSA_Signature eddsa.Signature
+	ImgBytes        frontend.Variable // Image as a Big Endian bytes; used in signature verification
 }
 
 // GeneratePCD_Keys implements TransformationCircuit.
-func (circuit IdentityCircuit) GeneratePCD_Keys(sk signature.Signer, trType string, m map[string]PCD_Keys) (map[string]PCD_Keys, error) {
+func (circuit IdentityCircuit) GeneratePCD_Keys(sk signature.Signer) (PCD_Keys, error) {
 
 	// Set the security parameter (BN254) and compile a constraint system (aka compliance_predicate)
 	compliance_predicate_id, err := frontend.Compile(ecc.BN254.ScalarField(), r1cs.NewBuilder, &circuit)
 	if err != nil {
-		fmt.Println("generatePCD_Keys(): ERROR while compiling constraint system for " + trType)
-		return nil, err
+		fmt.Println("generatePCD_Keys(): ERROR while compiling constraint system for " + circuit.GetType())
+		return PCD_Keys{}, err
 	}
 
 	// Generate PCD Keys from the compliance_predicate
 	provingKey, verifyingKey, err := groth16.Setup(compliance_predicate_id)
 	if err != nil {
 		fmt.Println("generatePCD_Keys(): ERROR while generating PCD Keys from the constraint system for" + circuit.GetType())
-		return nil, err
+		return PCD_Keys{}, err
 	}
 
 	pcd_keys := PCD_Keys{
@@ -42,9 +42,7 @@ func (circuit IdentityCircuit) GeneratePCD_Keys(sk signature.Signer, trType stri
 		VerifyingKey: verifyingKey,
 	}
 
-	m[circuit.GetType()] = pcd_keys
-
-	return m, err
+	return pcd_keys, err
 }
 
 func (circuit IdentityCircuit) Define(api frontend.API) error {

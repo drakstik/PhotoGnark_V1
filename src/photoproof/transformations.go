@@ -7,11 +7,11 @@ import (
 
 type Transformation interface {
 	GetType() string
-	ToFr(sk signature.Signer) (TransformationCircuit, error)
+	ToFr(sk signature.Signer, public_key []byte) (TransformationCircuit, error)
 }
 
 type TransformationCircuit interface {
 	GetType() string
 	Define(api frontend.API) error
-	GeneratePCD_Keys(sk signature.Signer, trType string, m map[string]PCD_Keys) (map[string]PCD_Keys, error)
+	GeneratePCD_Keys(sk signature.Signer) (PCD_Keys, error)
 }

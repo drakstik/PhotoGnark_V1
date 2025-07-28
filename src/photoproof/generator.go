@@ -6,46 +6,29 @@ import (
 	"github.com/consensys/gnark-crypto/signature"
 )
 
-// This function sets PCD_Keys for each permissible transformation in the camera.
+// Generates PCD_Keys for each given Transformation.
+// Leverages interface Transformation to apply the same Generator function to various Transformations.
 func Generator(sk signature.Signer, trs []Transformation) (map[string]PCD_Keys, error) {
 
 	m := map[string]PCD_Keys{}
 
-	for i := 0; i < len(trs); i++ {
+	for i := range trs {
 
-		trType := trs[i].GetType()
+		tr := trs[i]
 
-		// TODO: Add more transformations.
-		if trType == "id" {
-			// Assert the type of transformation to be IdentityTransformation
-			tr, ok := trs[i].(IdentityTransformation)
-			if !ok {
-				return map[string]PCD_Keys{}, fmt.Errorf("Generator(): ERROR while asserting " + trType + " into frontend.Circuit.")
-			}
-
-			// Set public key of transformation
-			tr.PublicKey = sk.Public()
-
-			// Set transformation with public key into camera
-			trs[i] = tr
-
-			FrTransformation, err := tr.ToFr(sk)
-			if err != nil {
-				return nil, err
-			}
-
-			// Generate PCD_Keys for this permissible transformation
-			newM, err := FrTransformation.GeneratePCD_Keys(sk, trs[i].GetType(), m)
-			if err != nil {
-				return map[string]PCD_Keys{}, fmt.Errorf("Generator() - ERROR while generating PCD_Keys.")
-			}
-
-			// Set new M
-			m = newM
-
-		} else {
-			return map[string]PCD_Keys{}, fmt.Errorf("Generator() - Please define permissible transformation list of names, at least \"id\".")
+		FrTransformation, err := tr.ToFr(sk, sk.Public().Bytes())
+		if err != nil {
+			return nil, err
 		}
+
+		// Generate PCD_Keys for this permissible transformation
+		pcd_keys, err := FrTransformation.GeneratePCD_Keys(sk)
+		if err != nil {
+			return map[string]PCD_Keys{}, fmt.Errorf("Generator() - ERROR while generating PCD_Keys; TrType: " + tr.GetType())
+		}
+
+		// Set new M
+		m[FrTransformation.GetType()] = pcd_keys
 	}
 
 	return m, nil

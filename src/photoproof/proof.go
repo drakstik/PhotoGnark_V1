@@ -15,12 +15,10 @@ type PCD_Keys struct {
 	VerifyingKey groth16.VerifyingKey
 }
 
-type Proof struct {
-	Signature     []byte
-	PublicKey     signature.PublicKey
-	PCD_Keys      map[string]PCD_Keys
-	PCD_Proofs    map[string]groth16.Proof
-	PCD_Witnesses map[string]witness.Witness
+type Gnark_Proof struct {
+	Gnark_Keys     map[string]PCD_Keys
+	Gnark_Proof    groth16.Proof
+	Public_Witness witness.Witness
 }
 
 func NewSecretKey() (signature.Signer, error) {

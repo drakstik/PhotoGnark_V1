@@ -12,16 +12,16 @@ import (
 )
 
 const (
-	// N must be a constant, not a variable, because N is used in the definition of the image transformation circuits;
-	// and circuits do not change once compiled. N is also used to set array size, which is set at compile time and is meant
+	// N must be a constant, not a variable, because N is used in the definition of the image size and
+	// circuits do not change once compiled. N is also used to set array size, which is set at compile time and is meant
 	// to remain unchangeable.
-	N  = 1080
+	N  = 16
 	N2 = N * N // Number of pixels in an image.
 )
 
 type Image struct {
-	Pixels   [N2]Pixel
-	ImgBytes []byte
+	Pixels     [N2]Pixel
+	PixelBytes []byte
 }
 
 type FrImage struct {
@@ -100,7 +100,7 @@ func NewImage(flag string) (Image, error) {
 		return Image{}, err
 	}
 
-	newImage.ImgBytes = b
+	newImage.PixelBytes = b
 
 	return newImage, err
 }
@@ -131,18 +131,18 @@ func (img Image) ToFr() (frImg FrImage) {
 	return output
 }
 
-// Return the JSON encoded version of an image as bytes.
+// Return the JSON encoded version of an image's pixels as bytes.
 func (img Image) ToByte() ([]byte, error) {
-	encoded_image, err := json.Marshal(img)
+	pixel_bytes, err := json.Marshal(img.Pixels)
 	if err != nil {
 		fmt.Println("Error while encoding image: " + err.Error())
 		return []byte{}, err
 	}
 
-	return encoded_image, err
+	return pixel_bytes, err
 }
 
-// Interprets image bytes as the bytes of a big-endian unsigned integer, sets z to that value, and return z value as a big endian slice.
+// Interprets pixel bytes as the bytes of a big-endian unsigned integer, sets z to that value, and return z value as a big endian slice.
 // If this step is skipped, you get this error:
 // "runtime error: slice bounds out of range".
 // This step is required to define an image into something that Gnark circuits understand.
@@ -163,13 +163,14 @@ func (img Image) ToBigEndian() ([]byte, error) {
 	return big_endian_bytes_Image, err
 }
 
+// Simple digital signature of the image's PixelBytes.
 func (img Image) Sign(secretKey signature.Signer) ([]byte, error) {
 
 	// 3. Instantiate MIMC BN254 hash function, to be used in signing the image
 	hFunc := hash.MIMC_BN254.New()
 
 	// 4. Sign the image (must first turn the image into a Big Endian)
-	signature, err := secretKey.Sign(img.ImgBytes, hFunc)
+	signature, err := secretKey.Sign(img.PixelBytes, hFunc)
 	if err != nil {
 		fmt.Println("Error while signing image: " + err.Error())
 	}
