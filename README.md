@@ -283,4 +283,8 @@ func (circuit IdentityCircuit) GeneratePCD_Keys(sk signature.Signer) (PCD_Keys, 
 ### The Prover
 Proving 
 
+<<<<<<< HEAD
 ### The Verifier
+=======
+### The Verifier
+>>>>>>> 120ed02d9a3c1a6784ea0e7c04692d7e28f67373
