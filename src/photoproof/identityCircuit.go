@@ -17,7 +17,7 @@ import (
 type IdentityCircuit struct {
 	PublicKey       eddsa.PublicKey
 	EdDSA_Signature eddsa.Signature
-	ImgBytes        frontend.Variable // Image as a Big Endian bytes; used in signature verification
+	ImgBytes        frontend.Variable `gnark:",public"` // Image as a Big Endian bytes; used in signature verification
 }
 
 // GeneratePCD_Keys implements TransformationCircuit.

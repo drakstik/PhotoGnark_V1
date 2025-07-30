@@ -8,6 +8,8 @@ func main() {
 	// Only testing Identity transformation as permissible
 	// examples.Test_New_Camera([]string{"id"})
 
-	examples.Take_Photo()
+	// examples.Test_Take_Photo()
+
+	examples.Test_Viewer()
 
 }

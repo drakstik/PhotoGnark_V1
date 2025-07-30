@@ -17,15 +17,15 @@ type Pixel struct {
 // ---------------------------------------------------------------
 
 type FrPixelLoc struct {
-	Row frontend.Variable //secret
-	Col frontend.Variable //secret
-	Idx frontend.Variable //secret
+	Row frontend.Variable `gnark:",inherit"` //secret
+	Col frontend.Variable `gnark:",inherit"` //secret
+	Idx frontend.Variable `gnark:",inherit"` //secret
 }
 
 type FrPixel struct {
-	RGB    frontend.Variable //secret
-	Packed frontend.Variable //secret
-	Loc    FrPixelLoc        //secret
+	RGB    frontend.Variable `gnark:",inherit"` //secret
+	Packed frontend.Variable `gnark:",inherit"` //secret
+	Loc    FrPixelLoc        `gnark:",inherit"` //secret
 }
 
 // ---------------------------------------------------------------------------------------

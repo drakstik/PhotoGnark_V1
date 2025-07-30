@@ -5,7 +5,7 @@ import (
 )
 
 // This tests NewCamera(), Generator(), GeneratePCD_Keys() and Take_Random_Photo()
-func Take_Photo() camera.Photograph {
+func Test_Take_Photo() camera.Photograph {
 	cam := Test_New_Camera([]string{"id"})
 
 	photo, err := cam.Take_Random_Photo()

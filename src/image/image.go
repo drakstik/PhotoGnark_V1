@@ -9,6 +9,7 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/hash"
 	"github.com/consensys/gnark-crypto/signature"
+	"github.com/consensys/gnark/frontend"
 )
 
 const (
@@ -25,8 +26,8 @@ type Image struct {
 }
 
 type FrImage struct {
-	Pixels   [N2]FrPixel // Secret
-	ImgBytes []byte
+	Pixels   [N2]FrPixel       `gnark:",secret"` // Secret
+	ImgBytes frontend.Variable `gnark:",secret"`
 }
 
 // ---------------------------------------------------------------------------------------
